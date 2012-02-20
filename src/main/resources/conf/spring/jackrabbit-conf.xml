@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+
+    <!-- JNDI -->
+
+    <bean id="repository" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName">
+            <value>java:comp/env/jackrabbit</value>
+        </property>
+    </bean>
+
+    <bean name="jcrSession" factory-bean="sessionFactory" factory-method="login" scope="request" destroy-method="logout" >
+        <aop:scoped-proxy/>
+    </bean>
+
+    <bean id="sessionFactory" class="cz.muni.fi.pa165.hrs.server.jcr.JcrSessionFactory">
+        <constructor-arg index="0" ref="repository"/>
+        <constructor-arg index="1" ref="jcrCredentials"/>
+        <constructor-arg index="2" type="java.io.InputStream" value="classpath:jackrabbit/hrsTypes.cnd"/>
+    </bean>
+
+    <bean id="jcrCredentials" class="javax.jcr.SimpleCredentials">
+        <constructor-arg index="0" type="java.lang.String" value="admin" />
+        <constructor-arg index="1" type="char[]" value="admin" />
+    </bean>
+
+</beans>

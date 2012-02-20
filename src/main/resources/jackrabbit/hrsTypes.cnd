@@ -1,0 +1,42 @@
+<hrs = 'http://fi.muni.cz/pa165/hrs'>
+
+// Root node
+[hrs:hrs]
++ * (hrs:users)
++ * (hrs:professions)
+
+// Users node, parent node of all user nodes
+[hrs:users]
+    orderable
++ * (hrs:user) multiple
+
+// User node
+[hrs:user]
+    -hrs:password (String) mandatory protected
+    -hrs:email (String) mandatory primary protected
+    -hrs:name (String) mandatory protected
+    -hrs:privileged (Boolean)
+        = 'false'
+        mandatory protected
+    -hrs:userProfession (Reference) protected
++ * (hrs:pdf)
++ * (hrs:odt)
+
+
+[hrs:professions]
+    orderable
++ * (hrs:profession) multiple
+
+[hrs:profession] > mix:referenceable
+    -hrs:name (String)
+        mandatory protected
+    -hrs:system (Boolean)
+        = 'false'
+        mandatory protected autocreated
+
+[hrs:hascontent] mixin
+    -hrs:content (String) mandatory
+
+[hrs:odt]
+
+[hrs:pdf]

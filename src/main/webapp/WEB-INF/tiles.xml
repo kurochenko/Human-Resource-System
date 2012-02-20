@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE tiles-definitions PUBLIC
+        "-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+        "http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+    <definition name="base.definition" template="/WEB-INF/jsp/layout.jsp">
+        <put-attribute name="title" value="" />
+        <put-attribute name="includes" value="/WEB-INF/jsp/includes.jsp" />
+        <put-attribute name="menu" value="/WEB-INF/jsp/menu.jsp" />
+        <put-attribute name="body" value="" />
+        <put-attribute name="onload" value="" />
+    </definition>
+
+    <definition name="index" extends="base.definition">
+        <put-attribute name="title" value="label.index.title" />
+        <put-attribute name="body" value="/WEB-INF/jsp/content/index.jsp" />
+    </definition>
+
+    <definition name="register" extends="base.definition">
+        <put-attribute name="title" value="label.registration.title" />
+        <put-attribute name="body" value="/WEB-INF/jsp/content/register.jsp" />
+        <put-attribute name="onload" value=" onload='loadProfessions(); registerConnect();'" />
+    </definition>
+    
+    <definition name="login" extends="base.definition">
+        <put-attribute name="title" value="label.login.title" />
+        <put-attribute name="body" value="/WEB-INF/jsp/content/login.jsp" />
+    </definition>
+    
+    <definition name="professions" extends="base.definition">
+        <put-attribute name="title" value="label.professions.title" />
+        <put-attribute name="body" value="/WEB-INF/jsp/content/professions.jsp" />
+        <put-attribute name="onload" value=" onload='loadProfessionsEdit()'" />
+    </definition>
+    
+    <definition name="edit" extends="base.definition">
+        <put-attribute name="title" value="label.user.edit.title" />
+        <put-attribute name="body" value="/WEB-INF/jsp/content/edit.jsp" />
+    </definition>
+    
+    <definition name="deleteAccount" extends="base.definition">
+        <put-attribute name="title" value="label.delete.title" />
+        <put-attribute name="body" value="/WEB-INF/jsp/content/deleteAccount.jsp" />
+    </definition>
+</tiles-definitions>

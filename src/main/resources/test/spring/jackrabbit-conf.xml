@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+
+    <bean name="testJcrSession" factory-bean="testSessionFactory" factory-method="login" scope="session" destroy-method="logout" >
+        <aop:scoped-proxy/>
+    </bean>
+
+    <bean id="testSessionFactory" class="cz.muni.fi.pa165.hrs.server.jcr.JcrSessionFactory">
+        <constructor-arg index="0" ref="testRepository"/>
+        <constructor-arg index="1" ref="testJcrCredentials"/>
+        <constructor-arg index="2" type="java.io.InputStream" value="classpath:jackrabbit/hrsTypes.cnd"/>
+    </bean>
+
+    <bean id="testRepository" class="org.apache.jackrabbit.core.RepositoryImpl">
+        <constructor-arg index="0" ref="testConfig" />
+    </bean>
+
+    <bean id="testConfig" class="org.apache.jackrabbit.core.config.RepositoryConfig" factory-method="create">
+        <constructor-arg index="0" type="java.io.InputStream" value="classpath:test/jackrabbit/repository.xml"/>
+        <constructor-arg index="1" type="java.lang.String" value="/tmp/repository" />
+    </bean>
+
+    <bean id="testJcrCredentials" class="javax.jcr.SimpleCredentials">
+        <constructor-arg index="0" type="java.lang.String" value="admin" />
+        <constructor-arg index="1" type="char[]" value="admin" />
+    </bean>
+
+    <bean class="org.springframework.beans.factory.config.CustomScopeConfigurer">
+        <property name="scopes">
+            <map>
+                <entry key="session">
+                    <bean class="org.springframework.context.support.SimpleThreadScope"/>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="cndFile" class="java.io.File">
+        <constructor-arg index="0" type="java.net.URI" value="classpath:jackrabbit/hrsTypes.cnd" />
+    </bean>
+
+    <bean id="testCvPdf" class="java.io.File">
+        <constructor-arg index="0" type="java.net.URI" value="classpath:/test/files/cv.pdf" />
+    </bean>
+
+    <bean id="testCvOdt" class="java.io.File">
+        <constructor-arg index="0" type="java.net.URI" value="classpath:/test/files/cv.odt" />
+    </bean>
+
+    <bean id="testSimpleTextPdf" class="java.io.File">
+        <constructor-arg index="0" type="java.net.URI" value="classpath:/test/files/simple_text.pdf" />
+    </bean>
+
+    <bean id="testSimpleTextOdt" class="java.io.File">
+        <constructor-arg index="0" type="java.net.URI" value="classpath:/test/files/simple_text.odt" />
+    </bean>
+</beans>

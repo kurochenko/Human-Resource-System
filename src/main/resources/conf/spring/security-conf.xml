@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:security="http://www.springframework.org/schema/security"
+        xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+                http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+                http://www.springframework.org/schema/security 
+                http://www.springframework.org/schema/security/spring-security-3.1.xsd
+                http://www.springframework.org/schema/aop 
+                http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+
+<!-- Security -->
+    <!-- Enables Spring Security native annotations (@PreAuthorize etc.) -->
+    <security:global-method-security pre-post-annotations="enabled" />
+    
+
+    <security:http auto-config='true' use-expressions="true">
+        <security:anonymous enabled="false"/>
+        <security:custom-filter ref = "anonymousAuthFilter" position = "ANONYMOUS_FILTER" />
+        <security:form-login login-processing-url="/j_spring_security_check"  login-page="/login" />
+        <security:logout logout-url="/logout" logout-success-url="/"/>  
+    </security:http>
+    
+    <security:authentication-manager>
+        <security:authentication-provider ref="customAuthenticationProvider" />
+    </security:authentication-manager>
+   
+    <bean 
+        id="loggedUser" 
+        class="cz.muni.fi.pa165.hrs.client.security.UserHolder" 
+        factory-method="getUserDetails" 
+        scope="request">
+        <aop:scoped-proxy/>
+    </bean>
+   
+    <bean 
+        id="anonymousUser" 
+        class="cz.muni.fi.pa165.hrs.client.security.SecurityUser" 
+        scope="session">
+        <aop:scoped-proxy />
+    </bean>
+    
+    <bean 
+        id="anonymousAuthFilter"
+        class="cz.muni.fi.pa165.hrs.client.security.CustomAnonymousAuthenticationFilter">
+        <property name="key" value="foobar"/>
+        <property name="anonymousUser" ref="anonymousUser"/>
+    </bean>
+
+    <bean 
+        id="anonymousAuthenticationProvider"
+        class="org.springframework.security.authentication.AnonymousAuthenticationProvider">
+        <property name="key" value="foobar"/>
+    </bean>
+    
+    <bean 
+        id="customAuthenticationProvider"
+        class="cz.muni.fi.pa165.hrs.client.security.CustomAuthenticationProvider">
+        <property name="userDetailsService" ref="securityUserServiceImpl"/>
+        <property name="passwordEncoder" ref="md5PasswordEncoder"/>
+    </bean>
+    
+    <bean 
+        id="md5PasswordEncoder"
+        class="org.springframework.security.authentication.encoding.Md5PasswordEncoder">
+    </bean>
+</beans>
