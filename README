@@ -1,0 +1,58 @@
+= Nastaveni jackrabbitu a Apache Tomcatu
+
+Repozitar JackRabbitu (dale jen JR), bude nadeployovan do Tomcatu a pres JNDI zpristupnen serverove casti aplikace HRS. JR bude vyuzivat relacni databaze PostgreSQL pro ukladani textovych dat a binarni data (soubory) bude ukladat primo na disk do file-systemu.
+
+== Nastaveni databaze (PgSQL)
+
+Po nainstalovani PgSQL serveru je potreba vytvorit novou databazi a uzivatele, ktery bude vlastnikem teto databaze. V tomto navodu je pojmenuju takto:
+
+* uzivatel: **db_user**
+* heslo: **db_passwd**
+* databaze: **db_pa165**
+
+== Nastaveni Jackrabbitu a Tomcatu
+
+# Stahneme nejnovejsi verzi Tomcatu a rozbalime do libovolneho adresare, v tomto priklade bude tomcat umisten v **/opt/pa165/** a rozbalenou slozku **apache-tomcat-//version//** prejmenujeme pro jednoduchost pouze na **tomcat**. Cela cesta bude tedy {{{/opt/pa165/tomcat}}}
+# Vytvorte adresar, ve kterem bude ulozena konfigurace jackrabbitu a samotny repozitar, ten pojmenujeme **jackrabbit** a umistime jej do **/opt/pa165/** {{{mkdir /opt/pa165/jackrabbit}}}
+# Ted je potreba [[http://jackrabbit.apache.org/downloads.html|stahnout JR]] (overena verze je 2.3.6) a pred deployem do tomcatu provest par zmen
+## Rozbalit WAR archiv (pokud nejde, staci prejmenovat *.war na *.zip)
+## Zkopirovat **/WEB-INF/templates/bootstrap.properties** do jiz vytvoreneho adresare pro konfiguraci JR {{{ cp ./WEB-INF/templates/bootstrap.properties /opt/pa165/jackrabbit/}}}
+## Ve /WEB-INF/web.xml zmenit cestu parametru {{{bootstrap-config}}} na {{{/WEB-INF/templates/bootstrap.properties}}} a ulozit. Tento udaj je ve web.xml dvakrat a je treba ho zmenit na obou mistech.
+## Zpet zabalit soubory do WAR archivu. POZOR, ale aby mel stejnou strukturu adresaru jak predtim. tzn soubory JSP a slozka WEB-INF atd. v korenu archivu. Archiv by mel mit opet koncovku **war**. V tomto priklade archiv pojmenujeme **jackrabbit.war**
+## Nakopirujeme do tomcatu do slozky pro deploy {{{/opt/pa165/tomcat/webapps/}}}
+# V konfiguracnim adresari vytvorime soubor {{{/opt/pa165/jackrabbit/repository.xml}}} a zkopirujeme do nej obsah z [[http://pastebin.com/9pQ64kEH]]. Tento soubor obsahuje potrebnou konfiguraci repozitare JR.
+# Upravime {{{/opt/pa165/jackrabbit/bootstrap.properties}}} a zmenime nasledujici parametry {{{repository.home=/opt/pa165/jackrabbit/
+repository.config=/opt/pa165/jackrabbit/repository.xml}}} Timto je hotova konfigurace jackrabbitu, nyni je potreba nakonfigurovat Tomcat, aby zpristupnil repozitar pres JNDI a taky pridat chybejici JAR baliky.
+#Vytvorime v adresari tomcatu adresar //common// {{{mkdir /opt/pa165/tomcat/common}}} do ktereho umistime JAR soubory
+## [[http://jdbc.postgresql.org/download.html|JDBC driver pro PostgreSQL]] (vyber verzi odpovidajici verzi nainstalovaneho PgSQL serveru)
+## [[http://mirrors.ibiblio.org/pub/mirrors/maven2/javax/jcr/jcr/2.0/jcr-2.0.jar|API pro JCR verze 2.0]]. \\
+Ted je potreba rict tomcatu, aby na classpath umistil i nase JAR soubory v adresari //common// a to tak, ze zmenime {{{/opt/pa165/tomcat/conf/catalina.properties}}} do atributu **common.loader** pridame {{{${catalina.home}/common,${catalina.home}/common/*.jar,}}}
+# Nastavime propagaci repozitare pres JNDI a to:
+## v {{{/opt/pa165/tomcat/conf/server.xml}}} zmenime hodnotu tagu **GlobalNamingResources**, tak, aby vypadala nasledovne {{{<GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+    <Resource name="UserDatabase" auth="Container"
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml" />
+
+    <Resource name="jackrabbit" auth="Container" type="javax.jcr.Repository" 
+	      factory="org.apache.jackrabbit.core.jndi.BindableRepositoryFactory" 
+	      configFilePath="/opt/pa165/jackrabbit/repository.xml" 
+              repHomeDir="/opt/pa165/jackrabbit" /> 
+  </GlobalNamingResources>}}}
+## V {{{/opt/pa165/tomcat/conf/context.xml}}} pridame do tagu **Context** atribut //crossContext// s hodnotou //true// {{{<Context crossContext="true">}}} 
+
+== Deploy aplikace
+
+# Z repozitare RTC stahneme projekty //HumanResourceSystemModel// a //HumanResourceSystemServer//. Pote postupne spustime v obou adresarich maven prikaz {{{mvn  install}}}. Nejdrive v modelu, pote v serveru, kvuli zavislosti. Nasledovne zkompilovany WAR archiv z adresare {{{./HumanResourceSystemServer/target/}}} zkopirujeme do {{{/opt/pa165/tomcat/webapps}}} a prejmenujeme na **hrs.war**
+# Ted muzeme spustit server {{{cd /opt/pa165/tomcat
+./bin/startup.sh; tail -f ./logs/catalina.out}}}
+
+== Mozne chyby
+
+=== PermGen space
+
+znamena, ze je virtualni masine prideleno malo pameti. Lze zvetsit napriklad parametrem {{{-Djava.awt.headless=true -Dfile.encoding=UTF-8 -server -Xms1536m  -Xmx1536m -XX:NewSize=256m -XX:MaxNewSize=512m -XX:PermSize=256m  -XX:MaxPermSize=512m -XX:+DisableExplicitGC}}}
